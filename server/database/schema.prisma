@@ -1,0 +1,215 @@
+// Prisma schema（Supabase PostgreSQL向け）
+// テーブル構成は仕様書46番の一覧に対応する:
+// users, players, player_cards, decks, deck_cards, matches, match_players,
+// match_game_states, pack_open_history
+
+generator client {
+  provider = "prisma-client"
+  output   = "./generated"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // 通常のクエリ用（Supabaseの接続プーラー経由のURLを推奨）
+  url       = env("DATABASE_URL")
+  // `prisma migrate`等CLIが使う直接接続URL（プーラーを経由しないURL）
+  directUrl = env("DIRECT_URL")
+}
+
+/// アカウント（Supabase Authのユーザーに対応。idはSupabase Authのユーザーid(JWTのsub)と一致させる）
+model User {
+  id          String   @id
+  email       String   @unique
+  displayName String?  @map("display_name")
+  /// 管理画面（カードマスター等のCRUD）を操作できるかどうか
+  isAdmin     Boolean  @default(false) @map("is_admin")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  player Player?
+
+  @@map("users")
+}
+
+/// アカウントのゲームプロフィール。
+/// 仕様書8番の「Player」(アバター/リーダーのマスターデータ = PlayerMaster)とは別概念。
+model Player {
+  id                   String        @id @default(uuid())
+  userId               String        @unique @map("user_id")
+  user                 User          @relation(fields: [userId], references: [id])
+  selectedPlayerCardId String?       @map("selected_player_card_id")
+  selectedPlayerMaster PlayerMaster? @relation(fields: [selectedPlayerCardId], references: [playerId])
+  createdAt            DateTime      @default(now()) @map("created_at")
+  updatedAt            DateTime      @updatedAt @map("updated_at")
+
+  playerCards       PlayerCard[]
+  decks             Deck[]
+  packOpenHistories PackOpenHistory[]
+  matchesAsPlayer1  Match[]      @relation("MatchPlayer1")
+  matchesAsPlayer2  Match[]      @relation("MatchPlayer2")
+  matchPlayers      MatchPlayer[]
+
+  @@map("players")
+}
+
+/// Player Collection（仕様書9番）：プレイヤーが実際に所有しているカードの枚数
+model PlayerCard {
+  id       String     @id @default(uuid())
+  playerId String     @map("player_id")
+  player   Player     @relation(fields: [playerId], references: [id])
+  cardId   String     @map("card_id")
+  card     CardMaster @relation(fields: [cardId], references: [cardId])
+  quantity Int
+
+  @@unique([playerId, cardId])
+  @@map("player_cards")
+}
+
+/// デッキ（仕様書10〜13番）。deckType は 'S' | 'E'
+model Deck {
+  id        String   @id @default(uuid())
+  playerId  String   @map("player_id")
+  player    Player   @relation(fields: [playerId], references: [id])
+  deckType  String   @map("deck_type")
+  deckName  String   @map("deck_name")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  deckCards           DeckCard[]
+  matchPlayersAsSDeck MatchPlayer[] @relation("SDeck")
+  matchPlayersAsEDeck MatchPlayer[] @relation("EDeck")
+
+  @@map("decks")
+}
+
+model DeckCard {
+  id       String     @id @default(uuid())
+  deckId   String     @map("deck_id")
+  deck     Deck       @relation(fields: [deckId], references: [id])
+  cardId   String     @map("card_id")
+  card     CardMaster @relation(fields: [cardId], references: [cardId])
+  quantity Int
+
+  @@unique([deckId, cardId])
+  @@map("deck_cards")
+}
+
+/// 対戦。status は 'waiting' | 'in_progress' | 'finished'
+model Match {
+  id             String    @id @default(uuid())
+  player1Id      String    @map("player1_id")
+  player1        Player    @relation("MatchPlayer1", fields: [player1Id], references: [id])
+  player2Id      String    @map("player2_id")
+  player2        Player    @relation("MatchPlayer2", fields: [player2Id], references: [id])
+  status         String
+  winnerPlayerId String?   @map("winner_player_id")
+  startedAt      DateTime? @map("started_at")
+  endedAt        DateTime? @map("ended_at")
+
+  matchPlayers MatchPlayer[]
+  gameStates   MatchGameState[]
+
+  @@map("matches")
+}
+
+/// 対戦時点でどのS Deck/E Deckを使用したかを記録する中間テーブル
+model MatchPlayer {
+  id       String @id @default(uuid())
+  matchId  String @map("match_id")
+  match    Match  @relation(fields: [matchId], references: [id])
+  playerId String @map("player_id")
+  player   Player @relation(fields: [playerId], references: [id])
+  sDeckId  String @map("s_deck_id")
+  sDeck    Deck   @relation("SDeck", fields: [sDeckId], references: [id])
+  eDeckId  String @map("e_deck_id")
+  eDeck    Deck   @relation("EDeck", fields: [eDeckId], references: [id])
+
+  @@unique([matchId, playerId])
+  @@map("match_players")
+}
+
+/// 対戦中のゲーム状態スナップショット（仕様書38, 39番: サーバーが唯一の正）
+model MatchGameState {
+  id            String   @id @default(uuid())
+  matchId       String   @map("match_id")
+  match         Match    @relation(fields: [matchId], references: [id])
+  turnNumber    Int      @map("turn_number")
+  stateSnapshot Json     @map("state_snapshot")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("match_game_states")
+}
+
+/// ガチャ開封履歴（仕様書14, 15番）
+model PackOpenHistory {
+  id            String     @id @default(uuid())
+  playerId      String     @map("player_id")
+  player        Player     @relation(fields: [playerId], references: [id])
+  packId        String     @map("pack_id")
+  pack          PackMaster @relation(fields: [packId], references: [packId])
+  resultCardIds Json       @map("result_card_ids")
+  openedAt      DateTime   @default(now()) @map("opened_at")
+
+  @@map("pack_open_history")
+}
+
+// ============================================================
+// Card Master（管理画面から編集する、ゲームのマスターデータ）
+// 元は仕様書47番の通りJSONファイルで管理していたが、管理画面から
+// 即時反映できるようにするためDBへ移行した（ユーザー確認済み）。
+// data/cards/*.json 相当の内容は server/database/seed.ts で初回投入し、
+// 以後はこのテーブルが唯一の正となる。JSONは手動バックアップ用途に残す。
+// ============================================================
+
+/// 通常カード（Subordinate / Spell / Field）のマスターデータ（仕様書4〜7番）
+model CardMaster {
+  cardId       String   @id @map("card_id")
+  /// 'subordinate' | 'spell' | 'field'
+  cardType     String   @map("card_type")
+  name         String
+  illustration String
+  effectText   String   @map("effect_text")
+  /// Subordinateのみ使用
+  attack       Int?
+  /// Subordinateのみ使用
+  health       Int?
+  /// Subordinate/Spell/Fieldで使用
+  energyCost   Int?     @map("energy_cost")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  playerCards PlayerCard[]
+  deckCards   DeckCard[]
+
+  @@map("card_masters")
+}
+
+/// Player（アバター/リーダー）のマスターデータ（仕様書8番）
+model PlayerMaster {
+  playerId     String   @id @map("player_id")
+  name         String
+  illustration String
+  attack       Int
+  health       Int
+  effectText   String   @map("effect_text")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  selectedByPlayers Player[]
+
+  @@map("player_masters")
+}
+
+/// Pack（ガチャ）のマスターデータ（仕様書14番）
+model PackMaster {
+  packId    String   @id @map("pack_id")
+  name      String
+  /// [{ rarity: string, count: number }, ...]
+  slots     Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  openHistories PackOpenHistory[]
+
+  @@map("pack_masters")
+}
