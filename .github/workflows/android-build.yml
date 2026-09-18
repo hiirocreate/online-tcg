@@ -1,0 +1,44 @@
+name: Android APK Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "client/android/**"
+      - "shared/**"
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Install dependencies (workspace root)
+        run: npm install
+
+      - name: Expo prebuild (Android native project生成)
+        working-directory: client/android
+        run: npx expo prebuild --platform android --non-interactive
+
+      - name: Build debug APK
+        working-directory: client/android/android
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: client/android/android/app/build/outputs/apk/debug/app-debug.apk
