@@ -1,0 +1,18 @@
+{
+  "name": "online-tcg-project",
+  "private": true,
+  "version": "0.1.0",
+  "description": "オンライン対戦カードゲーム（Web / Android / Server 共通ルートpackage.json）",
+  "workspaces": [
+    "shared",
+    "server",
+    "client/web",
+    "client/android"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev --workspace server",
+    "dev:web": "npm run dev --workspace client/web",
+    "dev:android": "npm run start --workspace client/android",
+    "test:server": "npm test --workspace server"
+  }
+}
