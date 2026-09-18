@@ -1,0 +1,12 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@tcg/shared": ["../../shared/types/index.ts"],
+      "@tcg/shared/constants": ["../../shared/constants/index.ts"],
+      "@tcg/shared/validation": ["../../shared/validation/index.ts"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
+}

@@ -1,0 +1,18 @@
+[
+  {
+    "cardId": "SP001",
+    "cardType": "spell",
+    "name": "小さな炎",
+    "illustration": "cards/SP001.webp",
+    "effectText": "",
+    "energyCost": 1
+  },
+  {
+    "cardId": "SP002",
+    "cardType": "spell",
+    "name": "癒しの光",
+    "illustration": "cards/SP002.webp",
+    "effectText": "",
+    "energyCost": 2
+  }
+]

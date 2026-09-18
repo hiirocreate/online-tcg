@@ -1,0 +1,10 @@
+[
+  {
+    "playerId": "PL001",
+    "name": "デフォルトプレイヤー",
+    "illustration": "players/PL001.webp",
+    "attack": 0,
+    "health": 20,
+    "effectText": ""
+  }
+]

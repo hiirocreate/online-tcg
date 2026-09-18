@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "オンライン対戦カードゲーム",
+    "slug": "online-tcg",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#ffffff",
+    "android": {
+      "package": "com.example.onlinetcg",
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      }
+    }
+  }
+}

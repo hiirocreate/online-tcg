@@ -1,0 +1,11 @@
+[
+  {
+    "packId": "P001",
+    "name": "スタートパック",
+    "slots": [
+      { "rarity": "N", "count": 3 },
+      { "rarity": "R", "count": 1 },
+      { "rarity": "SR", "count": 1 }
+    ]
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "cardId": "S001",
+    "cardType": "subordinate",
+    "name": "見習い戦士",
+    "illustration": "cards/S001.webp",
+    "effectText": "",
+    "attack": 2,
+    "health": 2,
+    "energyCost": 1
+  },
+  {
+    "cardId": "S002",
+    "cardType": "subordinate",
+    "name": "森の弓兵",
+    "illustration": "cards/S002.webp",
+    "effectText": "",
+    "attack": 3,
+    "health": 2,
+    "energyCost": 2
+  },
+  {
+    "cardId": "S003",
+    "cardType": "subordinate",
+    "name": "重装盾兵",
+    "illustration": "cards/S003.webp",
+    "effectText": "Guardner",
+    "attack": 2,
+    "health": 5,
+    "energyCost": 3
+  }
+]

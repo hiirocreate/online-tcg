@@ -1,0 +1,24 @@
+{
+  "name": "@tcg/android",
+  "version": "0.1.0",
+  "private": true,
+  "main": "node_modules/expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "prebuild": "expo prebuild --platform android"
+  },
+  "dependencies": {
+    "@tcg/shared": "*",
+    "expo": "~57.0.0",
+    "react": "19.2.3",
+    "react-native": "0.86.0",
+    "socket.io-client": "^4.7.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.0",
+    "@types/react": "^19.2.0",
+    "babel-preset-expo": "~57.0.0",
+    "typescript": "^5.5.0"
+  }
+}

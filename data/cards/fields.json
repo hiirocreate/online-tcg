@@ -1,0 +1,10 @@
+[
+  {
+    "cardId": "F001",
+    "cardType": "field",
+    "name": "静かなる祭壇",
+    "illustration": "cards/F001.webp",
+    "effectText": "",
+    "energyCost": 2
+  }
+]
